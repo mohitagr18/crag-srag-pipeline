@@ -2,10 +2,10 @@ import sys
 from loguru import logger
 from opik import track
 
-from .ingestion import run_ingestion
-from .retrieval import retrieve_qdrant, fallback_to_web
-from .evaluator import evaluate_relevance
-from .generation import iterative_generation
+from src.ingestion import run_ingestion
+from src.retrieval import retrieve_qdrant, fallback_to_web
+from src.evaluator import evaluate_relevance
+from src.generation import iterative_generation
 
 # Setup loguru
 logger.remove()
@@ -43,13 +43,20 @@ def run_crag_pipeline(query: str) -> str:
     return final_answer
 
 if __name__ == "__main__":
+    import sys
+    
     # Ensure environment variables are loaded if using python-dotenv, otherwise assume they are set
     logger.info("Initializing vector store before running pipeline...")
     run_ingestion()
     
-    # Default test query if run directly
-    sample_query = "What are the core components of the corrective self reflective RAG repository?"
-    answer = run_crag_pipeline(sample_query)
+    # Check for CLI arguments
+    if len(sys.argv) > 1:
+        query = " ".join(sys.argv[1:])
+    else:
+        # Default test query
+        query = "What are the core components of the corrective self reflective RAG repository?"
+        
+    answer = run_crag_pipeline(query)
     
     print("\n================ FINAL ANSWER ================\n")
     print(answer)
