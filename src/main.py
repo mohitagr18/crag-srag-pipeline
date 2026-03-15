@@ -26,12 +26,16 @@ def run_crag_pipeline(query: str) -> str:
         # 2. Fact-Checker CRAG Evaluator -> Route fallback Serper if needed.
         eval_result = evaluate_relevance(query, qdrant_chunks)
         
-        if eval_result.is_relevant:
-            logger.info("CRAG Evaluation Passed. Using Qdrant chunks.")
+        if eval_result.status == "correct":
+            logger.info("CRAG Result: CORRECT. Using local Qdrant chunks.")
             active_chunks = qdrant_chunks
+        elif eval_result.status == "ambiguous":
+            logger.info("CRAG Result: AMBIGUOUS. Merging local chunks with Serper Web fallback.")
+            web_chunks = fallback_to_web(query)
+            active_chunks = qdrant_chunks + web_chunks
         else:
-            logger.warning("CRAG Evaluation Failed. Falling back to Serper Web Search.")
-            logger.warning(f"CRAG Reasoning: {eval_result.reasoning}")
+            logger.warning("CRAG Result: INCORRECT. Falling back to Serper Web Search ONLY.")
+            logger.warning(f"Reasoning: {eval_result.reasoning}")
             active_chunks = fallback_to_web(query)
             
     # 3. Formatted Sub-Context Array -> Generation Draft

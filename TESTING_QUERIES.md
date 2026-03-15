@@ -44,6 +44,20 @@ The pipeline will automatically:
 - `PYTHONPATH=. uv run python src/main.py "Explain the exact cost figures in USD associated with manufacturing the DuraWeave mesh."`
 *(Since this document contains no pricing data, the strict Critic will catch any attempts to hallucinate a number out-of-context and force it to refine its answer to "The context does not contain cost figures.")*
 
+### 5. AMBIGUOUS CRAG (Hybrid Context / The "Middle" Case)
+*These queries contain partial information in the local docs but need web search to be complete. CRAG evaluates these as 'Ambiguous', merging both local and web context.*
+- `PYTHONPATH=. uv run python src/main.py "What are the core materials of the Orion hull and what is the current launch status of Artemis 3?"`
+
+### 6. MIDDLE SR-RAG (Partial Grounding / The "Middle" Case)
+*These queries result in a grounding score that isn't a flat zero but isn't high enough to pass (e.g. 0.4 - 0.7). The Critic will provide targeted feedback for specific refined grounding.*
+- `PYTHONPATH=. uv run python src/main.py "Summarize the Orion specs and predict if they'll exceed SpaceX's Starship payload thresholds based on current data."`
+*(The model will have local Orion data but will have to 'predict' against external data, likely leading to a middle-tier grounding score that triggers refinement.)*
+
+### 7. POOR SR-RAG (Hallucination Reset / The " < 0.4" Case)
+*These queries are designed to tempt the model into completely hallucinating an answer. If the grounding score is < 0.4, the pipeline will DISCARD the draft entirely and force a hard reset.*
+- `PYTHONPATH=. uv run python src/main.py "Detail the secret lizard colony living inside the Orion fuel tanks as described in the specifications document."`
+*(Since the document contains zero mention of lizards, any creative writing by the LLM will be flagged as a severe hallucination (< 0.4). The pipeline will wipe the draft and attempt a strict fact-checked response, ultimately returning a "No grounded answer found" disclaimer if it continues to fail.)*
+
 ---
 
 ## What Documents Are in the DB?

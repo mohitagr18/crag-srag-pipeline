@@ -1,9 +1,13 @@
 from pydantic import BaseModel, Field
 
+from typing import Literal
+
 class RelevanceEvaluation(BaseModel):
     """Evaluation schema for assessing the relevance of retrieved context against a user query."""
-    is_relevant: bool = Field(description="True if the retrieved context is relevant to the user query, False otherwise.")
-    reasoning: str = Field(description="Brief reasoning for why the context is or isn't relevant.")
+    status: Literal["correct", "ambiguous", "incorrect"] = Field(
+        description="Classification of context relevance: 'correct' (sufficient), 'ambiguous' (partially relevant, needs more), 'incorrect' (irrelevant)."
+    )
+    reasoning: str = Field(description="Brief reasoning for why the context was classified as such.")
 
 class GroundingEvaluation(BaseModel):
     """Evaluation schema for assessing how well a generated answer is grounded in the provided context."""

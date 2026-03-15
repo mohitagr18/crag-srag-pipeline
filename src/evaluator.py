@@ -28,11 +28,13 @@ def evaluate_relevance(query: str, context_chunks: list[dict]) -> RelevanceEvalu
     
     Query: {query}
     
-    Context Context:
+    Context:
     {context_text}
     
-    If the context contains relevant information that can directly help answer the query, mark it as relevant.
-    If the context is unrelated or the information is not helpful, mark it as irrelevant.
+    Classify the relevance as one of the following:
+    - 'correct': The context contains sufficient and direct information to fully answer the query.
+    - 'ambiguous': The context is related and contains partial information, but more context (e.g., from web search) would likely improve the answer.
+    - 'incorrect': The context is unrelated, unhelpful, or contains zero information relevant to the query.
     """
     
     logger.info("Calling Gemini model to evaluate relevance...")
@@ -50,9 +52,9 @@ def evaluate_relevance(query: str, context_chunks: list[dict]) -> RelevanceEvalu
     result_text = response.text
     try:
         eval_result = RelevanceEvaluation.model_validate_json(result_text)
-        logger.info(f"CRAG Result: is_relevant={eval_result.is_relevant} | Reasoning: {eval_result.reasoning}")
+        logger.info(f"CRAG Result: status={eval_result.status} | Reasoning: {eval_result.reasoning}")
         return eval_result
     except Exception as e:
         logger.error(f"Failed to parse RelevanceEvaluation JSON: {e}")
-        # Default to False (fallback to web) if there's a parsing error
-        return RelevanceEvaluation(is_relevant=False, reasoning=f"Parse Error: {e}")
+        # Default to 'incorrect' (fallback to web) if there's a parsing error
+        return RelevanceEvaluation(status="incorrect", reasoning=f"Parse Error: {e}")

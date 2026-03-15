@@ -743,6 +743,7 @@ dependencies = [
     { name = "google-genai", version = "1.67.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "loguru" },
     { name = "numpy" },
+    { name = "opencode-ai" },
     { name = "opik", version = "1.9.77", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "opik", version = "1.10.39", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pydantic" },
@@ -760,6 +761,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=1.47.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = "<2" },
+    { name = "opencode-ai", specifier = ">=0.1.0a36" },
     { name = "opik", specifier = ">=1.9.77" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pytest", specifier = ">=8.4.2" },
@@ -4354,6 +4356,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/56/87/eb0abb4ef88ddb95b3c13149384c4c288f584f3be17d6a4f63f8c3e3c226/openai-2.28.0.tar.gz", hash = "sha256:bb7fdff384d2a787fa82e8822d1dd3c02e8cf901d60f1df523b7da03cbb6d48d", size = 670334, upload-time = "2026-03-13T19:56:27.306Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/5a/df122348638885526e53140e9c6b0d844af7312682b3bde9587eebc28b47/openai-2.28.0-py3-none-any.whl", hash = "sha256:79aa5c45dba7fef84085701c235cf13ba88485e1ef4f8dfcedc44fc2a698fc1d", size = 1141218, upload-time = "2026-03-13T19:56:25.46Z" },
+]
+
+[[package]]
+name = "opencode-ai"
+version = "0.1.0a36"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/d5/51f96d49dd41c5d9996c7f03e22a760085c3589a43dacb8fa77a77c4d1cb/opencode_ai-0.1.0a36.tar.gz", hash = "sha256:3cd89e86e4a333f52999fc0df337afc9be39298c755e1a241d77dd33d7d79050", size = 108133, upload-time = "2025-08-27T02:38:58.878Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/af/0379ba45fd2f4c14be3b62a78714b1b34705d0472cdd8d62df47a8fb1ffd/opencode_ai-0.1.0a36-py3-none-any.whl", hash = "sha256:73bce046ec3d841dadb31bed658a5049f25cf0c2e3ebda2e2d1ff37d792ea1b5", size = 110221, upload-time = "2025-08-27T02:38:57.501Z" },
 ]
 
 [[package]]

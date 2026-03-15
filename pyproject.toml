@@ -10,6 +10,7 @@ dependencies = [
     "google-genai>=1.47.0",
     "loguru>=0.7.3",
     "numpy<2",
+    "opencode-ai>=0.1.0a36",
     "opik>=1.9.77",
     "pydantic>=2.12.5",
     "pytest>=8.4.2",
