@@ -29,36 +29,47 @@ def init_qdrant():
         logger.info(f"Initialized new Qdrant collection: {COLLECTION_NAME}")
 
 @track
-def fetch_and_process_repo_docs() -> list[dict]:
-    """Fetches README from github, parses via Docling, chunks via HybridChunker."""
-    repo_url = "https://raw.githubusercontent.com/sourangshupal/corrective_self_reflective_rag/main/README.md"
-    local_path = "repo_README.md"
-    
-    if not os.path.exists(local_path):
-        logger.info(f"Downloading repo documentation from {repo_url}")
-        resp = requests.get(repo_url)
-        resp.raise_for_status()
-        with open(local_path, "w", encoding="utf-8") as f:
-            f.write(resp.text)
-    
-    logger.info("Parsing document with Docling DocumentConverter")
-    converter = DocumentConverter()
-    result = converter.convert(local_path)
-    doc = result.document
-    
-    logger.info("Chunking using HybridChunker")
-    chunker = HybridChunker()
-    chunk_iter = chunker.chunk(doc)
-    
+def process_local_docs() -> list[dict]:
+    """Processes all .md and .pdf files in the data/ directory, parses via Docling, chunks via HybridChunker."""
+    data_dir = Path("data")
     chunks = []
-    for idx, chunk in enumerate(chunk_iter):
-        chunks.append({
-            "id": idx,
-            "text": chunk.text,
-            "source": local_path
-        })
     
-    logger.info(f"Produced {len(chunks)} chunks.")
+    if not data_dir.exists() or not data_dir.is_dir():
+        logger.warning(f"Data directory '{data_dir}' not found. Returning empty chunks.")
+        return chunks
+        
+    # Find all .md and .pdf files
+    valid_extensions = {".md", ".pdf"}
+    files_to_process = [f for f in data_dir.iterdir() if f.suffix.lower() in valid_extensions and f.is_file()]
+    
+    if not files_to_process:
+        logger.info(f"No valid documents found in {data_dir}. Place .md or .pdf files there.")
+        return chunks
+        
+    logger.info(f"Found {len(files_to_process)} documents to process in {data_dir}.")
+    
+    converter = DocumentConverter()
+    chunker = HybridChunker()
+    
+    for file_path in files_to_process:
+        logger.info(f"Parsing document: {file_path.name}")
+        try:
+            result = converter.convert(str(file_path))
+            doc = result.document
+            
+            logger.info(f"Chunking document: {file_path.name}")
+            chunk_iter = chunker.chunk(doc)
+            
+            for idx, chunk in enumerate(chunk_iter):
+                chunks.append({
+                    "id": f"{file_path.stem}_{idx}",
+                    "text": chunk.text,
+                    "source": file_path.name
+                })
+        except Exception as e:
+            logger.error(f"Failed to process {file_path.name}: {e}")
+            
+    logger.info(f"Produced a total of {len(chunks)} chunks from all documents.")
     return chunks
 
 @track
@@ -80,9 +91,9 @@ def embed_and_store(chunks: list[dict]):
     for i, (chunk, embedding_obj) in enumerate(zip(chunks, embeddings)):
         points.append(
             PointStruct(
-                id=i,
+                id=i,  # Qdrant requires integer or UUID string IDs
                 vector=embedding_obj.values,
-                payload={"text": chunk["text"], "source": chunk["source"]}
+                payload={"text": chunk["text"], "source": chunk["source"], "chunk_id": chunk["id"]}
             )
         )
     
@@ -95,8 +106,11 @@ def embed_and_store(chunks: list[dict]):
 def run_ingestion():
     """Builds the vector store index."""
     init_qdrant()
-    chunks = fetch_and_process_repo_docs()
-    embed_and_store(chunks)
+    chunks = process_local_docs()
+    if chunks:
+        embed_and_store(chunks)
+    else:
+        logger.warning("No chunks to store. Vector store is empty.")
 
 def get_qdrant_client() -> QdrantClient:
     return qdrant_client

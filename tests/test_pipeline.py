@@ -12,10 +12,10 @@ def setup_qdrant():
 
 def test_qdrant_retrieval_success():
     """
-    Test that querying about the repo architecture successfully retrieves context
+    Test that querying about the local data document successfully retrieves context
     from Qdrant and passes CRAG evaluation.
     """
-    query = "What are the core components of the corrective self reflective RAG repository?"
+    query = "What materials make up the Orion spacecraft hull?"
     
     # Check retrieval hits
     chunks = retrieve_qdrant(query)
@@ -38,9 +38,9 @@ def test_serper_web_fallback():
     # Retrieve from Qdrant (which only has repo details)
     chunks = retrieve_qdrant(query)
     
-    # CRAG Evaluation should FAIL because the repo docs don't cover current external events
+    # CRAG Evaluation should FAIL because the local docs don't cover current external events
     eval_result = evaluate_relevance(query, chunks)
-    assert eval_result.is_relevant is False, "Expected CRAG to mark these chunks as irrelevant since Qdrant only knows about the repo."
+    assert eval_result.is_relevant is False, "Expected CRAG to mark these chunks as irrelevant since Qdrant only knows about the local data directory."
     
     # Ensure fallback alone pulls web snippets
     web_chunks = fallback_to_web(query)
