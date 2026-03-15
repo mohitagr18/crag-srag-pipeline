@@ -1,0 +1,18 @@
+[project]
+name = "crag-srag-pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "docling>=2.69.1",
+    "google-adk>=1.18.0",
+    "google-genai>=1.47.0",
+    "loguru>=0.7.3",
+    "opik>=1.9.77",
+    "pydantic>=2.12.5",
+    "pytest>=8.4.2",
+    "qdrant-client>=1.16.1",
+    "requests>=2.32.5",
+    "torch<2.3",
+]
