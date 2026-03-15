@@ -83,8 +83,11 @@ def critique_generation(query: str, context_chunks: list[dict], answer: str) -> 
         return GroundingEvaluation(score=1.0, reasoning=f"Parse Error on Critique: {e}")
 
 @track
-def iterative_generation(query: str, context_chunks: list[dict], max_iterations: int = 3) -> str:
-    """Iterates generation and critique until grounding score passes 0.8 or max_iterations reached."""
+def iterative_generation(query: str, context_chunks: list[dict], max_iterations: int = 3) -> tuple[str, str]:
+    """
+    Iterates generation and critique. 
+    Returns: (final_answer, retry_feedback_if_failed_fully)
+    """
     feedback = None
     final_draft = ""
     
@@ -96,19 +99,15 @@ def iterative_generation(query: str, context_chunks: list[dict], max_iterations:
         
         if eval_result.score >= 0.8:
             logger.info("Generation passed critique. Returning final answer.")
-            return final_draft
+            return final_draft, None
         elif eval_result.score >= 0.4:
             logger.warning(f"Generation partially grounded (Score: {eval_result.score}). Attempting refinement...")
             feedback = eval_result.reasoning
         else:
-            logger.error(f"Generation POORLY grounded (Score: {eval_result.score}). Discarding draft and attempting hard reset.")
-            # Discard existing draft and tell the generator to start over with stricter constraints
-            feedback = f"STRICT RE-GENERATION REQUIRED. Your previous attempt was found to be ungrounded or hallucinated. Reason: {eval_result.reasoning}. Please restart and provide only facts present in the context."
-            final_draft = "" # Reset draft for safety
+            logger.error(f"Generation POORLY grounded (Score: {eval_result.score}). Signalling for re-retrieval reset.")
+            # Return reasoning as feedback to main.py for a potential query rewrite/re-retrieval
+            return final_draft, eval_result.reasoning
             
     logger.warning("Reached max iterations in SR-RAG refinement loop.")
-    # If final grounding is still extremely low, return a disclaimer
-    if eval_result.score < 0.4:
-         return "I am sorry, but I could not generate a reliably grounded answer based on the provided context."
-         
-    return final_draft
+    return final_draft, (feedback or "Max iterations reached without high grounding score.")
+
