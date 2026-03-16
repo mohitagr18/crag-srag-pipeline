@@ -4,10 +4,10 @@ This document visualizes the complete end-to-end flow of the Corrective and Self
 
 ```mermaid
 graph TD
-    User([User Query]) --> Ingestion[Ingestion Pipeline]
-    Ingestion --> Qdrant[(Qdrant In-Memory)]
+    User([User Query]) --> Decouple{Decouple Queries}
+    Decouple --> |"Search Query"| Retrieval[Retrieve from Qdrant]
+    Decouple --> |"Original Intent"| Draft
     
-    User --> Retrieval[Retrieve from Qdrant]
     Retrieval --> CRAG{CRAG Evaluator}
     
     CRAG -- status: correct --> Grounding[Active Context]
@@ -18,22 +18,20 @@ graph TD
     Web --> Grounding
     
     Grounding --> Draft[Generator: Draft Answer]
-    Draft --> Critique{Critic: Score Grounding}
+    Draft --> Critique{Critic: Score & Utility}
     
-    Critique -- "score >= 0.8" --> Success([Final Answer])
+    Critique -- "score >= 0.8 AND utility: true" --> Success([Final Answer])
     Critique -- "0.4 <= score < 0.8" --> Refine[Feedback: Refine Draft]
-    Critique -- "score < 0.4" --> Reset[Hallucination: Hard Reset]
+    Critique -- "Utility: False OR score < 0.4" --> LoopCheck{Loop Count?}
     
     Refine --> Draft
-    Reset --> Rewriter[Query Rewriter]
-    Rewriter --> Retrieval
     
-    Success --> Output([Final Answer])
-
-    subgraph "Knowledge Discovery"
-    Ingestion
-    Qdrant
-    end
+    LoopCheck -- "Loops < Max" --> Rewriter[Query Rewriter]
+    Rewriter --> |"New Search Query"| Retrieval
+    
+    LoopCheck -- "Loops Exhausted" --> BestEffort{Best Effort?}
+    BestEffort -- "score >= 0.8" --> Success
+    BestEffort -- "score < 0.8" --> Failure([Generic Disclaimer])
 
     subgraph "Corrective Routing (CRAG)"
     Retrieval
@@ -46,13 +44,13 @@ graph TD
     Draft
     Critique
     Refine
-    Reset
     end
 ```
 
 ## Key Components
 
-1.  **Ingestion Engine**: Uses `docling` to parse local PDF/MD files and `Qdrant` for storage.
+1.  **Query Decoupling**: The orchestrator maintains the original user intent for generation while refined/surgical search queries are used for adaptive retrieval loops.
 2.  **CRAG Evaluator**: Classifies context relevance into three states (Correct, Ambiguous, Incorrect) to determine if web search is needed.
-3.  **SR-RAG Engine**: An iterative loop that generates drafts and critiques them for grounding.
-4.  **Adaptive Retrieval**: If grounding fails severely, the **Query Rewriter** generates a new search query to re-trigger the CRAG/Retrieval process.
+3.  **Utility-Aware Critique**: The system evaluates not just if an answer is truthful (Grounding), but also if it actually addresses the user's intent (Utility).
+4.  **Adaptive Retrieval**: If utility or grounding is low, the **Query Rewriter** optimizes the search query to re-trigger the CRAG/Retrieval process.
+5.  **Best-Effort Delivery**: If search loops are exhausted, the system prioritizes grounded truths over generic errors, delivering partial answers if they are factually correct.

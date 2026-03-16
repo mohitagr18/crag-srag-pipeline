@@ -73,3 +73,19 @@ Pinned the dependencies in the environment:
 - `numpy<2`
 - `qdrant-client<=1.12.0`
 This ensured cross-compatibility between the vector store and the embedding models.
+
+---
+
+## 6. Python Version Compatibility (PEP 604)
+
+### Issue
+The project was initially developed using the Python 3.10+ union operator (`|`) for type hints (e.g., `tuple[str, GroundingEvaluation | None]`). However, the execution environment was running **Python 3.9**, which does not support this operator, leading to a `TypeError: unsupported operand type(s) for |`.
+
+### Example
+- **Code**: `-> tuple[str, GroundingEvaluation | None]`
+- **Error**: `TypeError: unsupported operand type(s) for |: 'ModelMetaclass' and 'NoneType'`
+
+### Resolution
+Migrated all type hints to be compatible with Python 3.9:
+- Imported `Optional` and `List` from `typing`.
+- Replaced `A | B` syntax with `Union[A, B]` or `Optional[A]`.

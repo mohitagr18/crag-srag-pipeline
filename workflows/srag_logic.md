@@ -5,30 +5,29 @@ This workflow details the Self-Reflective (SR-RAG) iteration loop, which handles
 ```mermaid
 flowchart TD
     Start[Handoff from CRAG] --> Draft[Generator: Draft Answer]
-    Draft --> Critique[Critic: Score Grounding]
+    Draft --> Critique[Critic: Score & Utility]
     
-    Critique --> Decision{Score State?}
+    Critique --> Decision{Critique Result?}
     
-    Decision -- ">= 0.8" --> Success[Done: Return Answer]
-    Decision -- "0.4 - 0.7" --> Refine[Feedback: Refine Draft]
-    Decision -- "< 0.4" --> Reset[Full Loop: Rewrite & Re-Retrieve]
+    Decision -- "Grounded >= 0.8 AND Useful" --> Success[Done: Return Answer]
+    Decision -- "Partial: 0.4 - 0.7" --> Refine[Feedback: Refine Draft]
+    Decision -- "Hallucination < 0.4" --> FullLoop[Exit: Full Loop Reset]
+    Decision -- "Truthful but Unhelpful" --> FullLoop
     
     Refine --> Draft
-    Reset --> Exit([Loop back to CRAG])
+    FullLoop --> Orchestrator{Orchestrator}
+    
+    Orchestrator -- "Retry Limit reached" --> BestEffort[Deliver Best-Effort]
+    Orchestrator -- "Rewrite & Re-retrieve" --> CRAG[Loop back to CRAG]
     
     Success --> End([User View])
-    
-    subgraph "Iteration Limit (3x)"
-    Draft
-    Critique
-    Decision
-    Refine
-    Reset
-    end
+    BestEffort --> End
 ```
 
 ## Refinement Scenarios
 
-- **Success (>= 0.8)**: The drafted answer is perfectly grounded in the context.
-- **Partial Grounding (0.4 - 0.7)**: The answer is mostly correct but contains unverified claims. The Critic identifies the gaps, and the Generator refines the specific sections.
-- **Hallucination (< 0.4)**: The draft contains severe inaccuracies. The system wipes the draft (Hard Reset) and retries with a "Strict Fact-Check" prompt.
+- **Success (>= 0.8 & Useful)**: The drafted answer is perfectly grounded and provides the requested information.
+- **Partial Grounding (0.4 - 0.7)**: The answer is mostly correct but contains unverified claims. The system iterates to fix the gaps.
+- **Low Utility (Truthful Ignorance)**: The answer is grounded (e.g., "I don't know") but fails to provide data. This triggers a **Full Loop Reset** to hunt for better data on the web.
+- **Hallucination (< 0.4)**: Inaccurate draft. Triggers a full re-search reset.
+- **Best-Effort Delivery**: If search loops are exhausted, the system delivers the best grounded answer found, even if it includes gaps, instead of a generic error.

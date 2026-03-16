@@ -3,6 +3,7 @@ from opik import track
 from google import genai
 from google.genai import types
 
+from typing import Optional, List, Dict
 from .schema import GroundingEvaluation
 
 genai_client = genai.Client()
@@ -88,7 +89,7 @@ def critique_generation(query: str, context_chunks: list[dict], answer: str) -> 
         return GroundingEvaluation(score=1.0, reasoning=f"Parse Error on Critique: {e}")
 
 @track
-def iterative_generation(query: str, context_chunks: list[dict], max_iterations: int = 3) -> tuple[str, GroundingEvaluation | None]:
+def iterative_generation(query: str, context_chunks: List[Dict], max_iterations: int = 3) -> tuple[str, Optional[GroundingEvaluation]]:
     """
     Iterates generation and critique. 
     Returns: (final_answer, eval_result_if_iteration_needed_or_failed)
