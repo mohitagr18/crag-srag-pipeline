@@ -52,17 +52,23 @@ def run_crag_pipeline(query: str, max_full_loops: int = 2) -> str:
                 
         # 3. SR-RAG Generation & Critique 
         # CRITICAL FIX: Always pass the ORIGINAL query to the generator so it doesn't drift.
-        final_answer, retry_feedback = iterative_generation(query, active_chunks)
+        final_answer, eval_result = iterative_generation(query, active_chunks)
         
         # 4. If SR-RAG failed to produce grounded answer, rewrite query and loop back
-        if retry_feedback and loop < max_full_loops - 1:
-            logger.error(f"SR-RAG failure detected: {retry_feedback}")
-            search_query = rewrite_query(query, retry_feedback)
+        if eval_result and loop < max_full_loops - 1:
+            logger.error(f"SR-RAG failure detected: {eval_result.reasoning}")
+            search_query = rewrite_query(query, eval_result.reasoning)
             continue
         else:
-            # Succes or reached limit
-            if retry_feedback:
-                logger.warning("Max full loops reached. Returning best effort answer.")
+            # Success or reached limit
+            if eval_result:
+                # If we are here, it means it's either the last loop OR it's a success
+                # BEST EFFORT CHECK: If grounding is high (truthful), deliver it even if utility/recall is low.
+                if eval_result.score >= 0.8:
+                    logger.warning("Max loops reached but answer is grounded. Returning Best-Effort response.")
+                    return final_answer
+                
+                logger.error("Final answer grounding remains low. Returning failure disclaimer.")
                 return "I am sorry, but after multiple retrieval attempts I could not generate a reliably grounded answer."
             
             logger.info("--- Pipeline Execution Complete ---")

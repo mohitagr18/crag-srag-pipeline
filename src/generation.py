@@ -88,13 +88,14 @@ def critique_generation(query: str, context_chunks: list[dict], answer: str) -> 
         return GroundingEvaluation(score=1.0, reasoning=f"Parse Error on Critique: {e}")
 
 @track
-def iterative_generation(query: str, context_chunks: list[dict], max_iterations: int = 3) -> tuple[str, str]:
+def iterative_generation(query: str, context_chunks: list[dict], max_iterations: int = 3) -> tuple[str, GroundingEvaluation | None]:
     """
     Iterates generation and critique. 
-    Returns: (final_answer, retry_feedback_if_failed_fully)
+    Returns: (final_answer, eval_result_if_iteration_needed_or_failed)
     """
     feedback = None
     final_draft = ""
+    eval_result = None
     
     for i in range(max_iterations):
         logger.info(f"--- Iteration {i+1}/{max_iterations} ---")
@@ -105,18 +106,17 @@ def iterative_generation(query: str, context_chunks: list[dict], max_iterations:
         if eval_result.score >= 0.8 and eval_result.utility:
             logger.info("Generation passed critique and is useful. Returning final answer.")
             return final_draft, None
-        elif eval_result.score >= 0.4 and eval_result.utility:
+            
+        if eval_result.score >= 0.4 and eval_result.utility:
             logger.warning(f"Generation partially grounded (Score: {eval_result.score}). Attempting refinement...")
             feedback = eval_result.reasoning
         elif not eval_result.utility:
-            logger.error(f"Generation lacks UTILITY (Score: {eval_result.score}). Forcefully signalling re-retrieval.")
-            # If the answer is grounded but useless (e.g., "I don't know"), we must seek better data.
-            return final_draft, f"Insufficient information in current context. Reason: {eval_result.reasoning}"
+            logger.error(f"Generation lacks UTILITY (Score: {eval_result.score}). Signalling for potential re-retrieval.")
+            return final_draft, eval_result
         else:
-            logger.error(f"Generation POORLY grounded (Score: {eval_result.score}). Signalling for re-retrieval reset.")
-            # Return reasoning as feedback to main.py for a potential query rewrite/re-retrieval
-            return final_draft, eval_result.reasoning
+            logger.error(f"Generation POORLY grounded (Score: {eval_result.score}). Signalling for reset.")
+            return final_draft, eval_result
             
     logger.warning("Reached max iterations in SR-RAG refinement loop.")
-    return final_draft, (feedback or "Max iterations reached without high grounding and utility.")
+    return final_draft, eval_result
 
