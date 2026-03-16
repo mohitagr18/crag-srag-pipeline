@@ -24,39 +24,40 @@ def run_crag_pipeline(query: str, max_full_loops: int = 2) -> str:
     """End-to-end pipeline execution with Full-Loop Adaptive Retrieval."""
     logger.info(f"--- Starting Pipeline for Query: '{query}' ---")
     
-    current_query = query
+    search_query = query
     for loop in range(max_full_loops):
         if loop > 0:
             logger.info(f"=== FULL LOOP {loop+1}/{max_full_loops}: RE-RETRIEVING WITH REFINED QUERY ===")
 
         # 1. Retrieve Qdrant Base Context
-        qdrant_chunks = retrieve_qdrant(current_query)
+        qdrant_chunks = retrieve_qdrant(search_query)
         
         if not qdrant_chunks:
-            logger.warning(f"No chunks found for '{current_query}'. Falling back to Web.")
-            active_chunks = fallback_to_web(current_query)
+            logger.warning(f"No chunks found for '{search_query}'. Falling back to Web.")
+            active_chunks = fallback_to_web(search_query)
         else:
             # 2. Fact-Checker CRAG Evaluator
-            eval_result = evaluate_relevance(current_query, qdrant_chunks)
+            eval_result = evaluate_relevance(search_query, qdrant_chunks)
             
             if eval_result.status == "correct":
                 logger.info("CRAG Result: CORRECT. Using local chunks.")
                 active_chunks = qdrant_chunks
             elif eval_result.status == "ambiguous":
                 logger.info("CRAG Result: AMBIGUOUS. Merging local chunks with Serper.")
-                web_chunks = fallback_to_web(current_query)
+                web_chunks = fallback_to_web(search_query)
                 active_chunks = qdrant_chunks + web_chunks
             else:
                 logger.warning("CRAG Result: INCORRECT. Falling back to Serper ONLY.")
-                active_chunks = fallback_to_web(current_query)
+                active_chunks = fallback_to_web(search_query)
                 
-        # 3. SR-RAG Generation & Critique
-        final_answer, retry_feedback = iterative_generation(current_query, active_chunks)
+        # 3. SR-RAG Generation & Critique 
+        # CRITICAL FIX: Always pass the ORIGINAL query to the generator so it doesn't drift.
+        final_answer, retry_feedback = iterative_generation(query, active_chunks)
         
         # 4. If SR-RAG failed to produce grounded answer, rewrite query and loop back
         if retry_feedback and loop < max_full_loops - 1:
             logger.error(f"SR-RAG failure detected: {retry_feedback}")
-            current_query = rewrite_query(query, retry_feedback)
+            search_query = rewrite_query(query, retry_feedback)
             continue
         else:
             # Succes or reached limit

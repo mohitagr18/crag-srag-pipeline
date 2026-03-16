@@ -10,6 +10,7 @@ class RelevanceEvaluation(BaseModel):
     reasoning: str = Field(description="Brief reasoning for why the context was classified as such.")
 
 class GroundingEvaluation(BaseModel):
-    """Evaluation schema for assessing how well a generated answer is grounded in the provided context."""
+    """Evaluation schema for assessing how well a generated answer is grounded and helpful."""
     score: float = Field(description="A score from 0.0 to 1.0 indicating how well the response is grounded in the context.")
-    reasoning: str = Field(description="Brief reasoning justifying the assigned grounding score.")
+    utility: bool = Field(description="True if the response actually answers the user's question. False if it is a disclaimer like 'I don't know' or is otherwise unhelpful.")
+    reasoning: str = Field(description="Brief reasoning justifying the assigned score and utility.")
