@@ -23,17 +23,13 @@
 
 
 
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║   📄 Local Docs  →  🔍 Smart Retrieval  →  🤖 Agentic Gen    ║
-║                                                              ║
-║   ✅ CRAG: 3-Way Routing (Correct/Ambiguous/Incorrect)      ║
-║   ✅ SR-RAG: Utility-Aware Iterative Grounding              ║
-║   ✅ Loops: Full-Loop Recursive Re-Retrieval                ║
-║   ✅ Intent: Original Query Preservation via Decoupling     ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-`
+| Feature | Description |
+| :--- | :--- |
+| 📄 **Local Docs** | Smart Retrieval → Agentic Gen |
+| ✅ **CRAG** | 3-Way Routing (Correct/Ambiguous/Incorrect) |
+| ✅ **SR-RAG** | Utility-Aware Iterative Grounding |
+| ✅ **Loops** | Full-Loop Recursive Re-Retrieval |
+| ✅ **Intent** | Original Query Preservation via Decoupling |
 
 
 
