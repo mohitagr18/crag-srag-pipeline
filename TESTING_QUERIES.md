@@ -1,10 +1,10 @@
 # Testing the CRAG/SR-RAG Pipeline
 
-I have updated the pipeline architecture! Instead of fetching a single GitHub README online, the ingestion engine now natively supports dragging-and-dropping `.txt` or `.pdf` files straight into your `data/` directory.
+I have updated the pipeline architecture! Instead of fetching a single GitHub README online, the ingestion engine now natively supports dragging-and-dropping `.txt` or `.pdf` files straight into the `data/` directory.
 
 ## How to Test
 
-Run the pipeline from your terminal using `uv`:
+Run the pipeline from the terminal using `uv`:
 
 ```bash
 PYTHONPATH=. uv run python src/main.py "Your query goes here"
@@ -20,7 +20,7 @@ The pipeline will automatically:
 
 ## Scenario Queries to Try
 
-*I have placed a sample capabilities document `data/orion_specs.txt` inside your folder so you can test immediately. To test your own data, drop it in the `data/` folder!*
+*I have placed a sample capabilities document `data/orion_specs.txt` inside the folder so you can test immediately. To test your own data, drop it in the `data/` folder!*
 
 ### 1. Pass CRAG without search
 *These queries ask about the contents of the ingested local documents. CRAG will evaluate the retrieved vector chunks as relevant and completely skip the Serper search.*
@@ -62,7 +62,7 @@ The pipeline will automatically:
 
 ## What Documents Are in the DB?
 
-- **Location**: The engine reads all `.txt` and `.pdf` files dropped into the local `/Users/mohit/Documents/GitHub/crag-srag-pipeline/data/` folder.
+- **Location**: The engine reads all `.txt` and `.pdf` files dropped into the local `data/` folder.
 - **Parsing**: `docling` automatically extracts the text layouts.
 - **Storage**: The chunks are stored via `hybrid chunking` into an **in-memory** instance of Qdrant (which only lives as long as the python script is running).
 
