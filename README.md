@@ -110,7 +110,7 @@
 ## 🏗️ Architecture
 
 
-
+```mermaid
 graph TD
     User([User Query]) --&gt; Decouple{Decouple Queries}
     Decouple --&gt; |"Search Query"| Retrieval[Retrieve from Qdrant]
@@ -140,7 +140,7 @@ graph TD
     LoopCheck -- "Loops Exhausted" --&gt; BestEffort{Best Effort?}
     BestEffort -- "score &gt;= 0.8" --&gt; Success
     BestEffort -- "score &lt; 0.8" --&gt; Failure([Generic Disclaimer])
-`
+```
 
 
 
