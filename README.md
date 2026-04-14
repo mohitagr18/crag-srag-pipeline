@@ -112,34 +112,34 @@
 
 ```mermaid
 graph TD
-    User([User Query]) --&gt; Decouple{Decouple Queries}
-    Decouple --&gt; |"Search Query"| Retrieval[Retrieve from Qdrant]
-    Decouple --&gt; |"Original Intent"| Draft
+    User([User Query]) --> Decouple{Decouple Queries}
+    Decouple --> |"Search Query"| Retrieval[Retrieve from Qdrant]
+    Decouple --> |"Original Intent"| Draft
     
-    Retrieval --&gt; CRAG{CRAG Evaluator}
+    Retrieval --> CRAG{CRAG Evaluator}
     
-    CRAG -- status: correct --&gt; Grounding[Active Context]
-    CRAG -- status: ambiguous --&gt; Hybrid[Merge: Local + Web]
-    CRAG -- status: incorrect --&gt; Web[Serper Web Search]
+    CRAG -- status: correct --> Grounding[Active Context]
+    CRAG -- status: ambiguous --> Hybrid[Merge: Local + Web]
+    CRAG -- status: incorrect --> Web[Serper Web Search]
     
-    Hybrid --&gt; Grounding
-    Web --&gt; Grounding
+    Hybrid --> Grounding
+    Web --> Grounding
     
-    Grounding --&gt; Draft[Generator: Draft Answer]
-    Draft --&gt; Critique{Critic: Score &amp; Utility}
+    Grounding --> Draft[Generator: Draft Answer]
+    Draft --> Critique{Critic: Score & Utility}
     
-    Critique -- "score &gt;= 0.8 AND utility: true" --&gt; Success([Final Answer])
-    Critique -- "0.4 &lt;= score &lt; 0.8" --&gt; Refine[Feedback: Refine Draft]
-    Critique -- "Utility: False OR score &lt; 0.4" --&gt; LoopCheck{Loop Count?}
+    Critique -- "score >= 0.8 AND utility: true" --> Success([Final Answer])
+    Critique -- "0.4 <= score < 0.8" --> Refine[Feedback: Refine Draft]
+    Critique -- "Utility: False OR score < 0.4" --> LoopCheck{Loop Count?}
     
-    Refine --&gt; Draft
+    Refine --> Draft
     
-    LoopCheck -- "Loops &lt; Max" --&gt; Rewriter[Query Rewriter]
-    Rewriter --&gt; |"New Search Query"| Retrieval
+    LoopCheck -- "Loops < Max" --> Rewriter[Query Rewriter]
+    Rewriter --> |"New Search Query"| Retrieval
     
-    LoopCheck -- "Loops Exhausted" --&gt; BestEffort{Best Effort?}
-    BestEffort -- "score &gt;= 0.8" --&gt; Success
-    BestEffort -- "score &lt; 0.8" --&gt; Failure([Generic Disclaimer])
+    LoopCheck -- "Loops Exhausted" --> BestEffort{Best Effort?}
+    BestEffort -- "score >= 0.8" --> Success
+    BestEffort -- "score < 0.8" --> Failure([Generic Disclaimer])
 ```
 
 
